@@ -18,6 +18,7 @@ import { SyncLogModal } from './syncLogModal';
 import { settingsStore } from '../settings';
 import { get } from 'svelte/store';
 import { getPcUrl } from '../parser/parseResponse';
+import { getWereadAuthState, getWereadAuthStateKey } from '../utils/wereadAuth';
 
 // 计算相对时间（中文显示）
 function getRelativeTimeInChinese(timestamp: number): string {
@@ -86,7 +87,7 @@ export class WereadBookshelfView extends ItemView {
 	private summaryEl: HTMLElement;
 	private gridEl: HTMLElement;
 	private settingsUnsubscribe: (() => void) | null = null;
-	private previousCookieValid = false;
+	private previousAuthStateKey = '';
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -94,7 +95,7 @@ export class WereadBookshelfView extends ItemView {
 		private bookshelfService: WereadBookshelfService
 	) {
 		super(leaf);
-		this.previousCookieValid = get(settingsStore).isCookieValid;
+		this.previousAuthStateKey = getWereadAuthStateKey(get(settingsStore));
 	}
 
 	getViewType(): string {
@@ -294,9 +295,17 @@ export class WereadBookshelfView extends ItemView {
 		// Update avatar button based on login state
 		const updateAvatarButton = () => {
 			const settings = get(settingsStore);
+			const authState = getWereadAuthState(settings);
 			userAvatarBtn.empty();
 
-			if (settings.isCookieValid && settings.userAvatar) {
+			if (authState.kind === 'official') {
+				userAvatarBtn.toggleClass('is-unlogged', !authState.ready);
+				setIcon(userAvatarBtn, 'key-round');
+				setTooltip(
+					userAvatarBtn,
+					authState.ready ? '正在使用官方 API Key' : '配置官方 API Key'
+				);
+			} else if (settings.isCookieValid && settings.userAvatar) {
 				// Logged in - show avatar image
 				userAvatarBtn.removeClass('is-unlogged');
 				const img = userAvatarBtn.createEl('img');
@@ -322,7 +331,10 @@ export class WereadBookshelfView extends ItemView {
 		// Avatar button click handler
 		userAvatarBtn.addEventListener('click', (event) => {
 			const settings = get(settingsStore);
-			if (settings.isCookieValid && settings.userAvatar) {
+			const authState = getWereadAuthState(settings);
+			if (authState.kind === 'official') {
+				this.plugin.openWereadSettingsTab();
+			} else if (settings.isCookieValid && settings.userAvatar) {
 				// Logged in - show right-click menu
 				this.showUserMenu(event as MouseEvent);
 			} else {
@@ -389,8 +401,9 @@ export class WereadBookshelfView extends ItemView {
 
 		// 订阅设置变化，监听登录状态改变
 		this.settingsUnsubscribe = settingsStore.subscribe((settings) => {
-			if (settings.isCookieValid !== this.previousCookieValid) {
-				this.previousCookieValid = settings.isCookieValid;
+			const authStateKey = getWereadAuthStateKey(settings);
+			if (authStateKey !== this.previousAuthStateKey) {
+				this.previousAuthStateKey = authStateKey;
 				this.loadBookshelf();
 			}
 		});
@@ -417,9 +430,10 @@ export class WereadBookshelfView extends ItemView {
 
 		// Check if user is logged in
 		const settings = get(settingsStore);
-		if (!settings.isCookieValid || settings.cookies.length === 0) {
+		const authState = getWereadAuthState(settings);
+		if (!authState.ready) {
 			this.loading = false;
-			this.renderUnloggedState();
+			this.renderUnloggedState(authState);
 			return;
 		}
 
@@ -440,23 +454,27 @@ export class WereadBookshelfView extends ItemView {
 		}
 	}
 
-	private renderUnloggedState(): void {
+	private renderUnloggedState(authState = getWereadAuthState(get(settingsStore))): void {
 		this.summaryEl.empty();
 		const card = this.summaryEl.createDiv({ cls: 'weread-bookshelf-unlogged-card' });
 
 		const content = card.createDiv({ cls: 'weread-bookshelf-unlogged-content' });
-		content.createDiv({ cls: 'weread-bookshelf-unlogged-title', text: '请先登录' });
+		content.createDiv({ cls: 'weread-bookshelf-unlogged-title', text: authState.title });
 		content.createDiv({
 			cls: 'weread-bookshelf-unlogged-description',
-			text: '请在设置中登录后开始使用'
+			text: authState.description
 		});
 
 		const button = content.createEl('button', {
 			cls: 'weread-bookshelf-unlogged-button',
-			text: '前往登录'
+			text: authState.actionText
 		});
 		button.onclick = () => {
-			this.openLoginQR();
+			if (authState.kind === 'official') {
+				this.plugin.openWereadSettingsTab();
+			} else {
+				this.openLoginQR();
+			}
 		};
 	}
 

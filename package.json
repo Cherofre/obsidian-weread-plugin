@@ -6,6 +6,7 @@
 	"scripts": {
 		"clean": "rimraf dist main.js",
 		"build": "svelte-check && npm run lint && webpack",
+		"test:auth-state": "node scripts/test-auth-state.mjs",
 		"test:official-api": "node scripts/test-official-api-adapters.mjs",
 		"test:dev-isolation": "node scripts/test-dev-plugin-isolation.mjs",
 		"deploy": "NODE_ENV=development webpack && ./sync.sh",
