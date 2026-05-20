@@ -108,7 +108,7 @@ export const normalizeOfficialHighlightResponse = (resp: any): HighlightResponse
 		synckey: resp?.synckey ?? 0,
 		updated: (resp?.updated ?? []).map((item: any) => ({
 			...item,
-			style: item?.style ?? 0,
+			style: item?.style ?? 1,
 			colorStyle: item?.colorStyle ?? 0,
 			type: item?.type ?? 1
 		})),

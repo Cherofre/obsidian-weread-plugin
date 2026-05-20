@@ -85,7 +85,7 @@ const highlights = normalizeOfficialHighlightResponse({
 	]
 });
 assert.equal(highlights.updated[0].type, 1);
-assert.equal(highlights.updated[0].style, 0);
+assert.equal(highlights.updated[0].style, 1);
 assert.equal(highlights.removed.length, 0);
 
 console.log('official API adapter tests passed');
