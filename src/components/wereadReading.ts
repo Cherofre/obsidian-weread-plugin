@@ -1,7 +1,7 @@
 import { WorkspaceLeaf, ItemView } from 'obsidian';
 import WereadPlugin from '../../main';
 
-export const WEREAD_BROWSER_VIEW_ID = 'weread-reading-view';
+export const WEREAD_BROWSER_VIEW_ID = 'weread-dev-reading-view';
 const WEREAD_HOME_URL = 'https://weread.qq.com/web/shelf';
 const WEREAD_PARTITION = 'persist:weread-plugin-browser';
 

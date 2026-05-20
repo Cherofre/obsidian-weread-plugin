@@ -41,7 +41,7 @@ function getRelativeTimeInChinese(timestamp: number): string {
 	}
 }
 
-export const WEREAD_BOOKSHELF_VIEW_ID = 'weread-bookshelf-view';
+export const WEREAD_BOOKSHELF_VIEW_ID = 'weread-dev-bookshelf-view';
 
 type CategoryFilter = 'all' | 'book' | 'article';
 type SyncStatusFilter = 'all' | 'remoteOnly' | 'synced' | 'localOnly';
