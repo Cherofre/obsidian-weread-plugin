@@ -8,6 +8,7 @@ import WereadPlugin from '../main';
 import type { SyncLogEntry, Theme } from './models';
 
 export type SyncMode = 'blacklist' | 'whitelist';
+export type WereadDataSource = 'cookie' | 'official';
 export type ReadingOpenMode = 'TAB' | 'WINDOW';
 export type BookOpenMode = 'web' | 'app';
 export type BookshelfSortMode = 'recent' | 'title';
@@ -51,6 +52,10 @@ export const BUILT_IN_THEMES: Theme[] = [
 ];
 
 export interface WereadPluginSettings {
+	dataSource: WereadDataSource;
+	wereadApiKey: string;
+	isOfficialApiValid: boolean;
+	officialSkillVersion: string;
 	loginMethod: string;
 	cookies: Cookie[];
 	noteLocation: string;
@@ -102,6 +107,10 @@ export interface WereadPluginSettings {
 }
 
 const DEFAULT_SETTINGS: WereadPluginSettings = {
+	dataSource: 'cookie',
+	wereadApiKey: '',
+	isOfficialApiValid: false,
+	officialSkillVersion: '1.0.3',
 	loginMethod: 'scan',
 	cookies: [],
 	noteLocation: '/',
@@ -174,6 +183,12 @@ const createSettingsStore = () => {
 					? 'whitelist'
 					: 'blacklist'
 		};
+		if (settings.dataSource !== 'cookie' && settings.dataSource !== 'official') {
+			settings.dataSource = 'cookie';
+		}
+		if (!settings.officialSkillVersion) {
+			settings.officialSkillVersion = '1.0.3';
+		}
 		console.log(
 			'[weread plugin] Cookie 详情: 数量=' +
 				settings.cookies.length +
@@ -300,6 +315,35 @@ const createSettingsStore = () => {
 		store.update((settings) => {
 			settings.loginMethod = method;
 			return settings;
+		});
+	};
+
+	const setDataSource = (dataSource: WereadDataSource) => {
+		store.update((state) => {
+			state.dataSource = dataSource;
+			return state;
+		});
+	};
+
+	const setWereadApiKey = (wereadApiKey: string) => {
+		store.update((state) => {
+			state.wereadApiKey = wereadApiKey;
+			state.isOfficialApiValid = false;
+			return state;
+		});
+	};
+
+	const setIsOfficialApiValid = (valid: boolean) => {
+		store.update((state) => {
+			state.isOfficialApiValid = valid;
+			return state;
+		});
+	};
+
+	const setOfficialSkillVersion = (officialSkillVersion: string) => {
+		store.update((state) => {
+			state.officialSkillVersion = officialSkillVersion.trim() || '1.0.3';
+			return state;
 		});
 	};
 
@@ -715,6 +759,10 @@ const createSettingsStore = () => {
 		initialise,
 		actions: {
 			setLoginMethod,
+			setDataSource,
+			setWereadApiKey,
+			setIsOfficialApiValid,
+			setOfficialSkillVersion,
 			setNoteLocationFolder,
 			setCookies,
 			clearCookies,
