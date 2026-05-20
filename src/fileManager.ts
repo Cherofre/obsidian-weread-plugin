@@ -6,6 +6,7 @@ import { frontMatterDocType, buildFrontMatter } from './utils/frontmatter';
 import { get } from 'svelte/store';
 import { settingsStore } from './settings';
 import { getLinesInString } from './utils/fileUtils';
+import { isVaultPathInFolder } from './utils/vaultPath';
 
 export default class FileManager {
 	private vault: Vault;
@@ -146,6 +147,10 @@ export default class FileManager {
 	}
 
 	public getWereadNoteAnnotationFile = (file: TFile): AnnotationFile | null => {
+		if (!isVaultPathInFolder(file.path, get(settingsStore).noteLocation)) {
+			return null;
+		}
+
 		const cache = this.metadataCache.getFileCache(file);
 		const frontmatter = cache?.frontmatter;
 
@@ -172,8 +177,10 @@ export default class FileManager {
 	};
 
 	public async getNotebookFiles(): Promise<AnnotationFile[]> {
+		const noteLocation = get(settingsStore).noteLocation;
 		const files = this.vault.getMarkdownFiles();
 		return files
+			.filter((file) => isVaultPathInFolder(file.path, noteLocation))
 			.map((file) => {
 				const cache = this.metadataCache.getFileCache(file);
 				return { file, frontmatter: cache?.frontmatter };

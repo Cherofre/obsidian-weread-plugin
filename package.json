@@ -9,6 +9,7 @@
 		"test:auth-state": "node scripts/test-auth-state.mjs",
 		"test:official-api": "node scripts/test-official-api-adapters.mjs",
 		"test:dev-isolation": "node scripts/test-dev-plugin-isolation.mjs",
+		"test:vault-path-scope": "node scripts/test-vault-path-scope.mjs",
 		"deploy": "NODE_ENV=development webpack && ./sync.sh",
 		"lint": "eslint . --ext .ts --fix"
 	},
