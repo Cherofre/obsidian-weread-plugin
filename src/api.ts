@@ -3,6 +3,7 @@ import { settingsStore } from './settings';
 import { get } from 'svelte/store';
 import { getCookieString } from './utils/cookiesUtil';
 import { Cookie, parse, splitCookiesString } from 'set-cookie-parser';
+import OfficialWereadProvider from './wereadOfficialApi';
 import {
 	HighlightResponse,
 	BookReviewResponse,
@@ -14,6 +15,15 @@ import {
 import CookieCloudManager from './cookieCloud';
 export default class ApiManager {
 	readonly baseUrl: string = 'https://weread.qq.com';
+	private readonly officialProvider = new OfficialWereadProvider();
+
+	private useOfficialDataSource(): boolean {
+		return (get(settingsStore) as any).dataSource === 'official';
+	}
+
+	async verifyOfficialApiKey(): Promise<boolean> {
+		return this.officialProvider.verifyApiKey();
+	}
 
 	private getHeaders() {
 		let cookieString = getCookieString(get(settingsStore).cookies);
@@ -155,6 +165,10 @@ export default class ApiManager {
 	}
 
 	async getNotebooksWithRetry() {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getNotebooksWithRetry();
+		}
+
 		let noteBookResp: [] = await this.getNotebooks();
 		if (noteBookResp === undefined) {
 			//retry get notebooks
@@ -176,6 +190,10 @@ export default class ApiManager {
 	}
 
 	async getNotebooks() {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getNotebooksWithRetry();
+		}
+
 		let noteBooks = [];
 		const req: RequestUrlParam = {
 			url: `${this.baseUrl}/api/user/notebook`,
@@ -274,6 +292,10 @@ export default class ApiManager {
 	}
 
 	async getBook(bookId: string): Promise<BookDetailResponse | undefined> {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getBook(bookId);
+		}
+
 		try {
 			const req: RequestUrlParam = {
 				url: `${this.baseUrl}/web/book/info?bookId=${bookId}`,
@@ -293,6 +315,10 @@ export default class ApiManager {
 	}
 
 	async getNotebookHighlights(bookId: string): Promise<HighlightResponse | undefined> {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getNotebookHighlights(bookId);
+		}
+
 		try {
 			const req: RequestUrlParam = {
 				url: `${this.baseUrl}/web/book/bookmarklist?bookId=${bookId}`,
@@ -307,6 +333,10 @@ export default class ApiManager {
 	}
 
 	async getNotebookReviews(bookId: string): Promise<BookReviewResponse | undefined> {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getNotebookReviews(bookId);
+		}
+
 		try {
 			const url = `${this.baseUrl}/web/review/list?bookId=${bookId}&listType=11&mine=1&synckey=0`;
 			const req: RequestUrlParam = { url: url, method: 'GET', headers: this.getHeaders() };
@@ -321,6 +351,10 @@ export default class ApiManager {
 	}
 
 	async getChapters(bookId: string): Promise<ChapterResponse | undefined> {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getChapters(bookId);
+		}
+
 		try {
 			const url = `${this.baseUrl}/web/book/chapterInfos`;
 			const reqBody = {
@@ -349,6 +383,10 @@ export default class ApiManager {
 	 * @returns 书籍阅读进度信息
 	 */
 	async getProgress(bookId: string): Promise<BookProgressResponse | undefined> {
+		if (this.useOfficialDataSource()) {
+			return this.officialProvider.getProgress(bookId);
+		}
+
 		try {
 			const url = `${this.baseUrl}/web/book/getProgress?bookId=${bookId}`;
 			const req: RequestUrlParam = { url: url, method: 'GET', headers: this.getHeaders() };
